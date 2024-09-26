@@ -22,7 +22,7 @@ private:
         case 1:
             return "\033[34mAzul\033[0m";      // Azul
         case 2:
-            return "\033[33mCafe\033[0m";      // Café (Amarillo)
+          cout << "\033[38;5;130mMarrón\033[0m" << endl; // Color marrón
         case 3:
             return "\033[35mMorado\033[0m";    // Morado
         case 4:
