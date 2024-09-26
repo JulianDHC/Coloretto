@@ -1,265 +1,313 @@
+#include <map> 
 #include <vector>
 #include <iostream>
 #include <algorithm>
 #include <ctime>
 #include <cstdlib>
 #include <string>
-
-//Las cosas consultadas van a estar comentadas con la explicación, para aprender a usarlas después.
-
 using namespace std;
 
 class Baraja
 {
 private:
-	vector<int> baraja;
+    vector<int> baraja;
 
-	string obtenerColor(int numero)
-	{
-		switch (numero)
-		{
-		case 0:
-			return "Naranjado";
-		case 1:
-			return "Azul";
-		case 2:
-			return "Cafe";
-		case 3:
-			return "Morado";
-		case 4:
-			return "Verde";
-		case 5:
-			return "Rojo";
-		case 6:
-			return "Amarillo";
-		case 7:
-			return "Sumar 2";
-		case 8:
-			return "Comodín";
-		case 9:
-			return "Comodín dorado";
-		default:
-			return "Error carta inexistente";
-		}
-	}
-
+  // Función que devuelve el nombre y el color de la carta usando códigos ANSI
+    string obtenerColor(int numero)
+    {
+        switch (numero)
+        {
+        case 0:
+            return "\033[38;5;214mNaranjado\033[0m";  // Naranjado (Amarillo)
+        case 1:
+            return "\033[34mAzul\033[0m";      // Azul
+        case 2:
+            return "\033[33mCafe\033[0m";      // Café (Amarillo)
+        case 3:
+            return "\033[35mMorado\033[0m";    // Morado
+        case 4:
+            return "\033[32mVerde\033[0m";     // Verde
+        case 5:
+            return "\033[31mRojo\033[0m";      // Rojo
+        case 6:
+            return "\033[33mAmarillo\033[0m";  // Amarillo
+        case 7:
+            return "\033[36mSumar 2\033[0m";   // Cyan (Sumar 2)
+        case 8:
+            return "\033[36mComodín\033[0m";   // Cyan (Comodín)
+        case 9:
+            return "\033[33mComodín dorado\033[0m";  // Dorado (Amarillo)
+        default:
+            return "\033[31mError carta inexistente\033[0m";  // Rojo (Error)
+        }
+    }
 public:
-	Baraja()
-	{
-		for (int i = 0; i < 8; ++i)
-		{
-			for (int j = 0; j < 9; ++j)
-			{
-				baraja.push_back(i);
-			}
-		}
-		baraja.push_back(7);
-		baraja.push_back(8);
-		baraja.push_back(8);
-		baraja.push_back(9);
-		//srand y random_suffle son funciones importadas desde librerías. srand(time) sirve para que la aleatoriedad de los numeros 
-		//sea distinta cada que ejecutemos el programa. Ya que con el rand normal se generan pero luego siguen una secuencia.
-		//random_suffle: Reorganiza los elementos del rango (primera posicion , ultima posicion) de forma aleatoria.
-		srand(time(0));
-		random_shuffle(baraja.begin(), baraja.end());
-	}
+    Baraja()
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            for (int j = 0; j < 9; ++j)
+            {
+                baraja.push_back(i);
+            }
+        }
+        baraja.push_back(7);
+        baraja.push_back(8);
+        baraja.push_back(8);
+        baraja.push_back(9);
+        srand(time(0));
+        random_shuffle(baraja.begin(), baraja.end());
+    }
 
-	int getSize() const
-	{
-		return baraja.size();
-	}
+    int getSize() const
+    {
+        return baraja.size();
+    }
 
-	string tomarCarta()
-	{
-		int cart = baraja.back();
-		baraja.pop_back();
-		return obtenerColor(cart);
-	}
+    string tomarCarta()
+    {
+        int cart = baraja.back();
+        baraja.pop_back();
+        return obtenerColor(cart);
+    }
 };
 
 class Jugador
 {
 public:
-	string nombre;
-	vector<string> mazo1;
-	vector<string> mazo2;
-	vector<string> mazo3;
+    string nombre;
+    vector<string> cartasRecolectadas; // Almacena todas las cartas recolectadas por el jugador
 
-	Jugador(string nombre) : nombre(nombre) {}
+    Jugador(string nombre) : nombre(nombre) {}
 
-	void agregarCarta(int mazo, string carta)
-	{
-		switch (mazo)
-		{
-		case 1:
-		    mazo1.push_back(carta);
-		    break;
-		case 2:
-		    mazo2.push_back(carta);
-		    break;
-		case 3:
-		    mazo3.push_back(carta);
-		    break;
-		default:
-		    cout << "Jugador no válido" << endl;
-		}
-	}
+    // Añadir una carta al vector de cartas recolectadas
+    void agregarCarta(string carta)
+    {
+        cartasRecolectadas.push_back(carta);
+    }
+
+    // Calcular los puntos basados en las reglas de Coloretto
+    int calcularPuntaje()
+    {
+        map<string, int> conteoColores;
+        int puntaje = 0;
+        int cartasNegativas = 0; // Para colores que empiezan a restar puntos
+
+        // Contar cuántas cartas de cada color tiene el jugador
+        for (const string &carta : cartasRecolectadas)
+        {
+            // Ignorar comodines para este cálculo
+            if (carta != "Sumar 2" && carta != "Comodín" && carta != "Comodín dorado")
+            {
+                
+                conteoColores[carta]++;
+            }
+        }
+
+        // Calcular el puntaje por cada color
+        for (auto const &entry : conteoColores)
+        {
+            int cantidad = entry.second;
+
+            if (cantidad == 1)
+            {
+                puntaje += 1;
+            }
+            else if (cantidad == 2)
+            {
+                puntaje += 3;
+            }
+            else if (cantidad == 3)
+            {
+                puntaje += 6;
+            }
+            else if (cantidad == 4)
+            {
+                puntaje += 10;
+            }
+            else if (cantidad == 5)
+            {
+                puntaje += 15;
+            }
+            else if (cantidad >= 6)
+            {
+                puntaje += 21;
+            }
+
+            // Regla de más de 3 colores empiezan a restar
+            if (conteoColores.size() > 3)
+            {
+                cartasNegativas += cantidad;
+            }
+        }
+
+        // Restar puntos por exceso de colores
+        if (cartasNegativas > 3)
+        {
+            puntaje -= (cartasNegativas - 3); // Por cada color adicional se resta
+        }
+
+        return puntaje;
+    }
+
+    // Mostrar las cartas recolectadas
+    void mostrarCartas()
+    {
+        cout << "Cartas recolectadas por " << nombre << ": ";
+        for (const string &carta : cartasRecolectadas)
+        {
+            cout << carta << " ";
+        }
+        cout << endl;
+    }
 };
 
 class Filas
 {
 public:
-    vector<string> fila1;
-    vector<string> fila2;
-    vector<string> fila3;
-    vector<bool> filaTomada; 
-    
-    //constructor, inicializa un vector de booleanos que nos va a servir pa saber si la fila fue tomada.
-    Filas():filaTomada(3, false) {}
+    vector<vector<string>> filas; // Filas dinámicas según la cantidad de jugadores
+    vector<bool> filaTomada;
+
+    // Constructor dinámico basado en la cantidad de filas
+    Filas(int numFilas) : filas(numFilas), filaTomada(numFilas, false) {}
 
     void agregarCartaAFila(int fila, string carta)
     {
-        if (filaTomada[fila - 1]) {
+        if (filaTomada[fila - 1])
+        {
             cout << "No se pueden agregar cartas a una fila que ya fue tomada." << endl;
             return;
         }
-        switch (fila)
-        {
-        case 1:
-            fila1.push_back(carta);
-            break;
-        case 2:
-            fila2.push_back(carta);
-            break;
-        case 3:
-            fila3.push_back(carta);
-            break;
-        default:
-            cout << "Fila inválida." << endl;
-            break;
-        }
+        filas[fila - 1].push_back(carta);
     }
-    
+
     void tomarFila(int fila, Jugador &jugador)
-    {
-        //nullptr significa que el apuntador no se dirige a ninguna dirección de la memoria.
-        //Eso nos ayuda a que podamos dirigirlo a cualquiera de las 3 filas para, pues, tomarla.
-        vector<string> *filaElegida = nullptr;
-        
-        switch (fila)
         {
-        case 1:
-            filaElegida = &fila1;
-            break;
-        case 2:
-            filaElegida = &fila2;
-            break;
-        case 3:
-            filaElegida = &fila3;
-            break;
-        default:
-            cout << "Fila inválida." << endl;
-            return;
+    if (filaTomada[fila - 1])
+    {
+        cout << "La fila ya fue tomada." << endl;
+        return;
         }
-        
-        //clear se usa para limpiar el vector, dejandolo vacío.
-        filaElegida->clear();
-        filaTomada[fila - 1] = true;
-    }
+
+    vector<string> &filaElegida = filas[fila - 1];
+    
+    for (const string &carta : filaElegida)
+    {
+        jugador.agregarCarta(carta); // Agrega cada carta recolectada al vector del jugador
+        }
+    filaElegida.clear();
+    filaTomada[fila - 1] = true;
+        }
 
     void mostrarFilas()
     {
-        cout << "Fila 1: ";
-        for (string carta : fila1)
+        for (int i = 0; i < filas.size(); ++i)
         {
-            cout << carta << " ";
+            cout << "Fila " << i + 1 << ": ";
+            for (const string &carta : filas[i])
+            {
+                cout << carta << " ";
+            }
+            cout << (filaTomada[i] ? "(Tomada)" : "") << endl;
         }
-        cout << (filaTomada[0] ? "(Tomada)" : "") << endl;
-
-        cout << "Fila 2: ";
-        for (string carta : fila2)
-        {
-            cout << carta << " ";
-        }
-        cout << (filaTomada[1] ? "(Tomada)" : "") << endl;
-
-        cout << "Fila 3: ";
-        for (string carta : fila3)
-        {
-            cout << carta << " ";
-        }
-        cout << (filaTomada[2] ? "(Tomada)" : "") << endl;
     }
 };
-
 
 class Juego
 {
 private:
-	Baraja baraja;
-	Filas filas;
-	vector<Jugador> jugadores;
-	vector<bool> jugadoresTomaronFila; // Indica si cada jugador ya tomó una fila en la ronda actual.
+    Baraja baraja;
+    Filas *filas;
+    vector<Jugador> jugadores;
+    vector<bool> jugadoresTomaronFila;
 
 public:
     Juego()
     {
-        jugadores.push_back(Jugador("Juan"));
-        jugadores.push_back(Jugador("Olman"));
-        jugadores.push_back(Jugador("Julián"));
-        jugadoresTomaronFila.resize(jugadores.size(), false); // Inicializa el vector a "false".
+        int numJugadores;
+        do
+        {
+            cout << "Ingrese el número de jugadores (mínimo 3, máximo 5): ";
+            cin >> numJugadores;
+            if (numJugadores < 3 || numJugadores > 5)
+            {
+                cout << "Número de jugadores no válido. Deben ser entre 3 y 5." << endl;
+            }
+        } while (numJugadores < 3 || numJugadores > 5);
+
+        for (int i = 0; i < numJugadores; ++i)
+        {
+            string nombre;
+            cout << "Ingrese el nombre del jugador " << i + 1 << ": ";
+            cin >> nombre;
+            jugadores.push_back(Jugador(nombre));
+        }
+
+        filas = new Filas(numJugadores);
+        jugadoresTomaronFila.resize(numJugadores, false);
     }
-    
-	void iniciarJuego()
-	{
-	    int eleccion = 0;
-		int turno = 0;
-		int primerTurno = 0;
-		int ronda = 0;
-		bool validacion = false;
-		
-		while (baraja.getSize() > 15)
+
+    ~Juego()
+    {
+        delete filas;
+    }
+
+    void iniciarJuego()
+    {
+        int eleccion = 0;
+        int turno = 0;
+        int primerTurno = 0;
+        int ronda = 0;
+        bool validacion = false; 
+        bool Fin = true;
+        
+        while (Fin == true)
         {
             Jugador &jugadorActual = jugadores[turno % jugadores.size()];
-
             if (jugadoresTomaronFila[turno % jugadores.size()])
             {
                 cout << jugadorActual.nombre << " ya tomó una fila y no puede jugar en esta ronda." << endl;
                 turno++;
-                //continue funciona para seguir en el siguiente ciclo, por lo que el jugador se saltaría.
                 continue;
             }
 
             cout << "\nTurno de " << jugadorActual.nombre << endl;
-
             if (primerTurno == 0)
             {
                 string carta = baraja.tomarCarta();
                 cout << jugadorActual.nombre << " ha tomado la carta: " << carta << endl;
-                int filaElegida = eleccionFila(filas);
-                filas.agregarCartaAFila(filaElegida, carta);
+                int filaElegida = eleccionFila(*filas);
+                filas->agregarCartaAFila(filaElegida, carta);
                 primerTurno++;
             }
             else
             {
                 do
-                {
+                {                  
+
                     cout << "¿Desea tomar una carta o tomar una fila? \n1. Carta \n2. Fila" << endl;
                     cin >> eleccion;
+                    if (filas->filas1[0]==2 && filas->filas1[1] ==2 )
+                    {
+                        cout<<"Filas llenas. Debes elegir una fila"<<endl;
+                        eleccion = 2;
+                    }
+                    
                     if (eleccion == 1)
                     {
                         string carta = baraja.tomarCarta();
                         cout << jugadorActual.nombre << " ha tomado la carta: " << carta << endl;
-                        int filaElegida = eleccionFila(filas);
-                        filas.agregarCartaAFila(filaElegida, carta);
+                        int filaElegida = eleccionFila(*filas);
+                        filas->agregarCartaAFila(filaElegida, carta);
                         validacion = true;
                     }
+                    
                     else if (eleccion == 2)
                     {
-                        int filaElegida = eleccionFila2(filas);
-                        filas.tomarFila(filaElegida, jugadorActual);
+                        int filaElegida = eleccionFila2(*filas);
+                        filas->tomarFila(filaElegida, jugadorActual);
                         cout << jugadorActual.nombre << " ha tomado la fila " << filaElegida << endl;
-                        jugadoresTomaronFila[turno % jugadores.size()] = true; // Marcamos que el player tomó la fila.
+                        jugadoresTomaronFila[turno % jugadores.size()] = true;
                         validacion = true;
                     }
                     else
@@ -270,18 +318,22 @@ public:
                 } while (!validacion);
             }
 
-            // Comprobar si todos los jugadores tomaron una fila
             if (todosTomaronFila())
             {
-                resetearRonda(filas);
+                if (baraja.getSize() < 60)
+                {
+                    Fin = false;
+                }
+                resetearRonda();
                 ronda++;
-                cout << "Todos los jugadores tomaron una fila. Inicia la siguiente ronda." << endl;
+                cout << "Todos los jugadores tomaron una fila." << endl;
             }
-
             turno++;
-            filas.mostrarFilas();
+            filas->mostrarFilas();
         }
-        cout << "El juego ha terminado. Quedan 15 cartas en la baraja." << endl;
+        cout << "El juego ha terminado. Quedan pocas cartas en la baraja." << endl;
+        
+        mostrarPuntajes();
     }
 
     bool todosTomaronFila()
@@ -296,83 +348,67 @@ public:
         return true;
     }
 
-    void resetearRonda(Filas& filas)
+    void mostrarPuntajes()
     {
-        // Fill sirve para llenar el vector de inicio a fin con el valor; en este caso: false.
+    for (Jugador &jugador:jugadores)
+        {
+        jugador.mostrarCartas();
+        int puntaje = jugador.calcularPuntaje();
+        cout << "Puntaje de " << jugador.nombre << ": " << puntaje << endl;
+        }
+    }
+    
+    void resetearRonda()
+    {
         fill(jugadoresTomaronFila.begin(), jugadoresTomaronFila.end(), false);
-        fill(filas.filaTomada.begin(), filas.filaTomada.end(), false);
+        fill(filas->filaTomada.begin(), filas->filaTomada.end(), false);
     }
 
-	int eleccionFila(Filas& filas)
-	{
-		int filaElegida;
-		bool entradaValida = false;
-		do
-		{
-			cout << "Elige una fila para colocar la carta (1, 2 o 3): ";
-			cin >> filaElegida;
+    int eleccionFila(Filas &filas)
+    {
+        int filaElegida;
+        bool entradaValida = false;
+        do
+        {
+            cout << "Elige una fila para colocar la carta (1, 2, etc.): ";
+            cin >> filaElegida;
+            if (filaElegida >= 1 && filaElegida <= filas.filas.size() && filas.filas[filaElegida - 1].size() < 3 && !filas.filaTomada[filaElegida - 1])
+            {
+                entradaValida = true;
+            }
+            else
+            {
+                cout << "Error, no puedes agregar más cartas a esta fila." << endl;
+            }
+        } while (!entradaValida);
+        return filaElegida;
+    }
 
-			if (filaElegida == 1 && filas.fila1.size() < 3 && filas.filaTomada[0] == false)
-			{
-				entradaValida = true;
-			}
-			else if (filaElegida == 2 && filas.fila2.size() < 3 && filas.filaTomada[1] == false)
-			{
-				entradaValida = true;
-			}
-			else if (filaElegida == 3 && filas.fila3.size() < 3 && filas.filaTomada[2] == false)
-			{
-				entradaValida = true;
-			}
-			else
-			{
-				cout << "Error, no puedes agregar más cartas a esta fila." << endl;
+    int eleccionFila2(Filas &filas)
+    {
+        int filaElegida;
+        bool entradaValida = false;
+        do
+        {
+            cout << "Elige una fila para tomarla: ";
+            cin >> filaElegida;
 
-			}
-
-		} while (!entradaValida);
-
-		return filaElegida;
-	}
-	int eleccionFila2(Filas& filas)
-	{
-		int filaElegida;
-		bool entradaValida = false;
-		do
-		{
-			cout << "Elige una fila para tomarla (1, 2 o 3): ";
-			cin >> filaElegida;
-			
-			//.empty nos dice si el vector está vacío. Si está vacío pues no la puede tomar.
-			if (filaElegida == 1 && filas.fila1.empty())
-			{
-				entradaValida = false;
-				cout << "Error: fila vacía" << endl;
-			}
-			else if (filaElegida == 2 && filas.fila2.empty())
-			{
-				entradaValida = false;
-				cout << "Error: fila vacía" << endl;
-
-			}
-			else if (filaElegida == 3 && filas.fila3.empty())
-			{
-				entradaValida = false;
-				cout << "Error: fila vacía" << endl;
-			}
-			else
-			{
-			    entradaValida = true;
-			}
-		} while (!entradaValida);
-
-		return filaElegida;
-	}
+            if (filaElegida >= 1 && filaElegida <= filas.filas.size() && !filas.filas[filaElegida - 1].empty() && !filas.filaTomada[filaElegida - 1])
+            {
+                entradaValida = true;
+            }
+            else
+            {
+                cout << "Error: fila vacía o ya fue tomada." << endl;
+            }
+        } while (!entradaValida);
+        return filaElegida;
+    }
 };
 
 int main()
 {
-	Juego juego;
-	juego.iniciarJuego();
-	return 0;
+    Juego juego;
+    juego.iniciarJuego();
+    return 0;
 }
