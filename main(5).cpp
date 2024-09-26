@@ -18,7 +18,7 @@ private:
         switch (numero)
         {
         case 0:
-            return "\033[33mNaranjado\033[0m";  // Naranjado (Amarillo)
+            return "\033[38;5;214mNaranjado\033[0m"  // Naranjado (Amarillo)
         case 1:
             return "\033[34mAzul\033[0m";      // Azul
         case 2:
