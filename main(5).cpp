@@ -12,35 +12,35 @@ class Baraja
 private:
     vector<int> baraja;
 
+  // Función que devuelve el nombre y el color de la carta usando códigos ANSI
     string obtenerColor(int numero)
     {
         switch (numero)
         {
         case 0:
-            return "Naranjado";
+            return "\033[33mNaranjado\033[0m";  // Naranjado (Amarillo)
         case 1:
-            return "Azul";
+            return "\033[34mAzul\033[0m";      // Azul
         case 2:
-            return "Cafe";
+            return "\033[33mCafe\033[0m";      // Café (Amarillo)
         case 3:
-            return "Morado";
+            return "\033[35mMorado\033[0m";    // Morado
         case 4:
-            return "Verde";
+            return "\033[32mVerde\033[0m";     // Verde
         case 5:
-            return "Rojo";
+            return "\033[31mRojo\033[0m";      // Rojo
         case 6:
-            return "Amarillo";
+            return "\033[33mAmarillo\033[0m";  // Amarillo
         case 7:
-            return "Sumar 2";
+            return "\033[36mSumar 2\033[0m";   // Cyan (Sumar 2)
         case 8:
-            return "Comodín";
+            return "\033[36mComodín\033[0m";   // Cyan (Comodín)
         case 9:
-            return "Comodín dorado";
+            return "\033[33mComodín dorado\033[0m";  // Dorado (Amarillo)
         default:
-            return "Error carta inexistente";
+            return "\033[31mError carta inexistente\033[0m";  // Rojo (Error)
         }
     }
-
 public:
     Baraja()
     {
