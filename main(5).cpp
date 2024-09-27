@@ -284,8 +284,6 @@ do
     cout << "¿Desea tomar una carta o tomar una fila? \n1. Carta \n2. Fila" << endl;
     cin >> eleccion;
 
-    // Verificar si todas las filas están llenas (3 cartas en cada fila)
-    bool filasLlenas = true;
     for (const auto& fila : filas->filas)
     {
         if (fila.size() < 3)
@@ -295,7 +293,6 @@ do
         }
     }
 
-    // Si las filas están llenas, forzar al jugador a tomar una fila
     if (filasLlenas)
     {
         cout << "Todas las filas están llenas. Debes elegir una fila." << endl;
