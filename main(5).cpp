@@ -279,58 +279,51 @@ public:
             }
             else
             {
-                do
-                {
-                    cout << "¿Desea tomar una carta o tomar una fila? \n1. Carta \n2. Fila" << endl;
-                    cin >> eleccion;
-                    if (eleccion == 1)
-                    {
-                        string carta = baraja.tomarCarta();
-                        cout << jugadorActual.nombre << " ha tomado la carta: " << carta << endl;
-                        int filaElegida = eleccionFila(*filas);
-                        filas->agregarCartaAFila(filaElegida, carta);
-                        validacion = true;
-                    }
-                    else if (eleccion == 2)
-                    {
-                        int filaElegida = eleccionFila2(*filas);
-                        filas->tomarFila(filaElegida, jugadorActual);
-                        cout << jugadorActual.nombre << " ha tomado la fila " << filaElegida << endl;
-                        jugadoresTomaronFila[turno % jugadores.size()] = true;
-                        validacion = true;
-                    }
-                    else
-                    {
-                        validacion = false;
-                        cout << "Elija una opción correcta" << endl;
-                    }
-                } while (!validacion);
-            }
+do
+{
+    cout << "¿Desea tomar una carta o tomar una fila? \n1. Carta \n2. Fila" << endl;
+    cin >> eleccion;
 
-            if (todosTomaronFila())
-            {
-                resetearRonda();
-                ronda++;
-                cout << "Todos los jugadores tomaron una fila. Inicia la siguiente ronda." << endl;
-            }
-            turno++;
-            filas->mostrarFilas();
+    // Verificar si todas las filas están llenas (3 cartas en cada fila)
+    bool filasLlenas = true;
+    for (const auto& fila : filas->filas)
+    {
+        if (fila.size() < 3)
+        {
+            filasLlenas = false;
+            break;
         }
-        cout << "El juego ha terminado. Quedan 15 cartas en la baraja." << endl;
-        
-        mostrarPuntajes();
     }
 
-    bool todosTomaronFila()
+    // Si las filas están llenas, forzar al jugador a tomar una fila
+    if (filasLlenas)
     {
-        for (bool tomoFila : jugadoresTomaronFila)
-        {
-            if (!tomoFila)
-            {
-                return false;
-            }
-        }
-        return true;
+        cout << "Todas las filas están llenas. Debes elegir una fila." << endl;
+        eleccion = 2; // Forzar elección de fila
+    }
+
+    if (eleccion == 1 && !filasLlenas) // Solo permitir tomar carta si las filas no están llenas
+    {
+        string carta = baraja.tomarCarta();
+        cout << jugadorActual.nombre << " ha tomado la carta: " << carta << endl;
+        int filaElegida = eleccionFila(*filas);
+        filas->agregarCartaAFila(filaElegida, carta);
+        validacion = true;
+    }
+    else if (eleccion == 2)
+    {
+        int filaElegida = eleccionFila2(*filas);
+        filas->tomarFila(filaElegida, jugadorActual);
+        cout << jugadorActual.nombre << " ha tomado la fila " << filaElegida << endl;
+        jugadoresTomaronFila[turno % jugadores.size()] = true;
+        validacion = true;
+    }
+    else
+    {
+        validacion = false;
+        cout << "Elija una opción correcta" << endl;
+    }
+} while (!validacion);
     }
 
     void mostrarPuntajes()
