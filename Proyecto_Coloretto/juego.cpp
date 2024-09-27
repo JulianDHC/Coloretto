@@ -75,6 +75,7 @@ void Juego::iniciarJuego() {
                     {
                         eleccion == 2;
                     }
+                    int filasVacias = 0;
                     bool filasLlenas = true;
                     for (const auto &fila : filas->filas)
                     {
@@ -82,6 +83,13 @@ void Juego::iniciarJuego() {
                         {
                             filasLlenas = false;
                             break;
+                        }
+                    }
+                    for (const auto &fila : filas->filas)
+                    {
+                        if (fila.size() == 0)
+                        {
+                            filasVacias++;
                         }
                     }
                     if (filasLlenas)
@@ -109,11 +117,21 @@ void Juego::iniciarJuego() {
                     }
                     else if (eleccion == 2)
                     {
+                        if (filasVacias == 3)
+                        {
+                            cout << "Filas vacías, no puedes tomar ninguna" << endl;
+                            validacion = false;
+                            primerTurno = 0;
+                            
+                        }
+                        else
+                        {
                         int filaElegida = eleccionFila2(*filas);
                         filas->tomarFila(filaElegida, jugadorActual);
                         cout << jugadorActual.nombre << " ha tomado la fila " << filaElegida << endl;
                         jugadoresTomaronFila[turno % jugadores.size()] = true;
                         validacion = true;
+                        }
                     }
                     else
                     {
