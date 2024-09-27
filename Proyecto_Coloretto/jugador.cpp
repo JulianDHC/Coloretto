@@ -37,41 +37,35 @@ int Jugador::calcularPuntaje() {
             }
         }
 
-        // Aplicar los puntos de las cartas "Sumar 2"
         puntaje += 2 * sumar2;
 
-        // Si tiene más de tres colores diferentes, debemos identificar los tres colores principales
         vector<pair<string, int>> coloresOrdenados(conteoColores.begin(), conteoColores.end());
 
-        // Ordenar los colores por cantidad de cartas en orden descendente
         sort(coloresOrdenados.begin(), coloresOrdenados.end(), [](const pair<string, int> &a, const pair<string, int> &b) {
             return a.second > b.second;
         });
 
-        // Asignar comodines dorados al color con más cartas
         for (int i = 0; i < comodinesDorado; ++i)
         {
             if (!coloresOrdenados.empty())
             {
-                coloresOrdenados[0].second++; // Añadir al color con más cartas
+                coloresOrdenados[0].second++;
             }
         }
-        //Asignar comodines comunes al color con más cartas
+    
         for (int i = 0; i < comodinesArcoiris; ++i)
         {
             if (!coloresOrdenados.empty())
             {
-                coloresOrdenados[0].second++; // Añadir al color con más cartas
+                coloresOrdenados[0].second++;
             }
         }
 
         int cartasNegativas = 0;
-        // Contar puntos solo de los tres colores con más cartas
         for (size_t i = 0; i < coloresOrdenados.size(); ++i)
         {
             int cantidad = coloresOrdenados[i].second;
 
-            // Los tres colores principales suman puntos
             if (i < 3)
             {
                 if (cantidad == 1)
@@ -101,12 +95,9 @@ int Jugador::calcularPuntaje() {
             }
             else
             {
-                // Cualquier color adicional resta puntos (-1 por carta)
                 cartasNegativas += cantidad;
             }
         }
-
-        // Restar puntos por cartas adicionales de colores diferentes a los tres principales
         puntaje -= cartasNegativas;
 
         return puntaje;
