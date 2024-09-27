@@ -1,10 +1,11 @@
+#include <map>
 #include <vector>
 #include <iostream>
 #include <algorithm>
 #include <ctime>
+#include <unordered_map>
 #include <cstdlib>
 #include <string>
-
 using namespace std;
 
 class Baraja
@@ -12,44 +13,51 @@ class Baraja
 private:
     vector<int> baraja;
 
+    // Función que devuelve el nombre y el color de la carta usando códigos ANSI
     string obtenerColor(int numero)
     {
         switch (numero)
         {
         case 0:
-            return "Naranjado";
+            return "\033[38;5;214mNaranjado\033[0m"; // Naranjado (Amarillo)
         case 1:
-            return "Azul";
+            return "\033[34mAzul\033[0m"; // Azul
         case 2:
-            return "Cafe";
+            return "\033[33mCafe\033[0m"; // Café (Amarillo)
         case 3:
-            return "Morado";
+            return "\033[35mMorado\033[0m"; // Morado
         case 4:
-            return "Verde";
+            return "\033[32mVerde\033[0m"; // Verde
         case 5:
-            return "Rojo";
+            return "\033[31mRojo\033[0m"; // Rojo
         case 6:
-            return "Sumar 2";
+            return "\033[33mAmarillo\033[0m"; // Amarillo
         case 7:
-            return " Camaleon(arcoiris) ";
+            return "\033[36mSumar 2\033[0m"; // Cyan (Sumar 2)
         case 8:
-            return "Camaleon dorado Arrastra una carta y tambien vale por cualquiera";
+            return "\033[36mComodín\033[0m"; // Cyan (Comodín)
+        case 9:
+            return "\033[33mComodín dorado\033[0m"; // Dorado (Amarillo)
         default:
-            return "Error carta inexistente";
+            return "\033[31mError carta inexistente\033[0m"; // Rojo (Error)
         }
     }
 
 public:
     Baraja()
     {
-        for (int i = 0; i < 7; ++i)
+        for (int i = 0; i < 8; ++i)
         {
             for (int j = 0; j < 9; ++j)
             {
                 baraja.push_back(i);
             }
         }
-        srand(time(0));
+        baraja.push_back(7);
+        baraja.push_back(8);
+        baraja.push_back(8);
+        baraja.push_back(9);
+        srand(static_cast<unsigned int>(time(0)));
         random_shuffle(baraja.begin(), baraja.end());
     }
 
@@ -60,13 +68,9 @@ public:
 
     string tomarCarta()
     {
-        if (baraja.empty())
-        {
-            throw out_of_range("Fila vacía.");
-        }
         int cart = baraja.back();
         baraja.pop_back();
-        return obtenerColor(cart); // Devuelve el color en lugar del número
+        return obtenerColor(cart);
     }
 };
 
@@ -74,74 +78,147 @@ class Jugador
 {
 public:
     string nombre;
-    vector<string> mazo;
+    vector<string> cartasRecolectadas;
 
     Jugador(string nombre) : nombre(nombre) {}
 
-    void agregarCarta(string carta)
+    void agregarCarta(const string &carta)
     {
-        mazo.push_back(carta);
+        cartasRecolectadas.push_back(carta);
     }
 
-    void mostrarMazo()
+    int calcularPuntaje() const
     {
-        cout << "Mazo de " << nombre << ": ";
-        for (string carta : mazo)
+        unordered_map<string, int> conteoColores;
+        int puntaje = 0;
+        int cartasNegativas = 0;
+
+        for (const string &carta : cartasRecolectadas)
+        {
+            if (carta != "Sumar 2" && carta != "Comodín" && carta != "Comodín dorado")
+            {
+                conteoColores[carta]++;
+            }
+        }
+
+        for (const auto &entry : conteoColores)
+        {
+            int cantidad = entry.second;
+
+            if (cantidad == 1) puntaje += 1;
+            else if (cantidad == 2) puntaje += 3;
+            else if (cantidad == 3) puntaje += 6;
+            else if (cantidad == 4) puntaje += 10;
+            else if (cantidad == 5) puntaje += 15;
+            else if (cantidad >= 6) puntaje += 21;
+
+            if (conteoColores.size() > 3)
+            {
+                cartasNegativas += cantidad;
+            }
+        }
+
+        if (cartasNegativas > 3)
+        {
+            puntaje -= (cartasNegativas - 3);
+        }
+
+        return puntaje;
+    }
+
+    void mostrarCartas() const
+    {
+        cout << "Cartas recolectadas por " << nombre << ": ";
+        for (const string &carta : cartasRecolectadas)
         {
             cout << carta << " ";
         }
         cout << endl;
+    }
+
+    void colocarComodines()
+    {
+        unordered_map<string, int> conteoColores;
+        for (const string &carta : cartasRecolectadas)
+        {
+            if (carta != "Sumar 2" && carta != "Comodín" && carta != "Comodín dorado")
+            {
+                conteoColores[carta]++;
+            }
+        }
+
+        string colorConMasCartas;
+        int maxCantidad = 0;
+        for (const auto &entry : conteoColores)
+        {
+            if (entry.second > maxCantidad)
+            {
+                maxCantidad = entry.second;
+                colorConMasCartas = entry.first;
+            }
+        }
+
+        if (!colorConMasCartas.empty())
+        {
+            cout << "Colocando Comodín en " << colorConMasCartas << endl;
+            cartasRecolectadas.push_back("Comodín");
+
+            cout << "Colocando Comodín dorado en " << colorConMasCartas << endl;
+            cartasRecolectadas.push_back("Comodín dorado");
+        }
+        else
+        {
+            cout << "No hay cartas para colocar comodines." << endl;
+        }
     }
 };
 
 class Filas
 {
 public:
-    vector<string> fila1;
-    vector<string> fila2;
-    vector<string> fila3;
+    vector<vector<string>> filas;
+    vector<bool> filaTomada;
 
-    void agregarCartaAFila(int fila, string carta)
+    Filas(int numFilas) : filas(numFilas), filaTomada(numFilas, false) {}
+
+    void agregarCartaAFila(int fila, const string &carta)
     {
-        switch (fila)
+        if (filaTomada[fila - 1])
         {
-        case 1:
-            fila1.push_back(carta);
-            break;
-        case 2:
-            fila2.push_back(carta);
-            break;
-        case 3:
-            fila3.push_back(carta);
-            break;
-        default:
-            cout << "Fila inválida." << endl;
-            break;
+            cout << "No se pueden agregar cartas a una fila que ya fue tomada." << endl;
+            return;
         }
+        filas[fila - 1].push_back(carta);
+    }
+
+    void tomarFila(int fila, Jugador &jugador)
+    {
+        if (filaTomada[fila - 1])
+        {
+            cout << "La fila ya fue tomada." << endl;
+            return;
+        }
+
+        vector<string> &filaElegida = filas[fila - 1];
+        for (const string &carta : filaElegida)
+        {
+            jugador.agregarCarta(carta);
+        }
+        filaElegida.clear();
+        filaTomada[fila - 1] = true;
     }
 
     void mostrarFilas()
     {
-        cout << "Fila 1: ";
-        for (string carta : fila1)
+        for (int i = 0; i < filas.size(); ++i)
         {
-            cout << carta << " ";
+            cout << "Fila " << i + 1 << ": ";
+            for (const string &carta : filas[i])
+            {
+                cout << carta << " ";
+            }
+            cout << (filaTomada[i] ? "(Tomada)" : "") << endl;
         }
-        cout << endl;
-
-        cout << "Fila 2: ";
-        for (string carta : fila2)
-        {
-            cout << carta << " ";
-        }
-        cout << endl;
-
-        cout << "Fila 3: ";
-        for (string carta : fila3)
-        {
-            cout << carta << " ";
-        }
-        cout << endl;
     }
 };
 
@@ -149,82 +226,116 @@ class Juego
 {
 private:
     Baraja baraja;
-    Filas filas;
+    Filas *filas;
     vector<Jugador> jugadores;
+    vector<bool> jugadoresTomaronFila;
 
 public:
     Juego()
     {
-        jugadores.push_back(Jugador("Juan"));
-        jugadores.push_back(Jugador("Olman"));
-        jugadores.push_back(Jugador("Julián"));
+        int numJugadores;
+        do
+        {
+            cout << "Ingrese el número de jugadores (mínimo 3, máximo 5): ";
+            cin >> numJugadores;
+            if (numJugadores < 3 || numJugadores > 5)
+            {
+                cout << "Número de jugadores no válido. Deben ser entre 3 y 5." << endl;
+            }
+        } while (numJugadores < 3 || numJugadores > 5);
+
+        for (int i = 0; i < numJugadores; ++i)
+        {
+            string nombre;
+            cout << "Ingrese el nombre del jugador " << i + 1 << ": ";
+            cin >> nombre;
+            jugadores.push_back(Jugador(nombre));
+        }
+
+        filas = new Filas(numJugadores);
+        jugadoresTomaronFila.resize(numJugadores, false);
+    }
+
+    ~Juego()
+    {
+        delete filas;
     }
 
     void iniciarJuego()
     {
         int turno = 0;
-        while (baraja.getSize() > 15)
+        while (true)
         {
             Jugador &jugadorActual = jugadores[turno % jugadores.size()];
-            cout << "\nTurno de " << jugadorActual.nombre << endl;
+            if (jugadoresTomaronFila[turno % jugadores.size()])
+            {
+                cout << jugadorActual.nombre << " ya tomó una fila y no puede jugar en esta ronda." << endl;
+                turno++;
+                continue;
+            }
 
+            cout << "\nTurno de " << jugadorActual.nombre << endl;
             string carta = baraja.tomarCarta();
             cout << jugadorActual.nombre << " ha tomado la carta: " << carta << endl;
+            int filaElegida = eleccionFila(*filas);
+            filas->agregarCartaAFila(filaElegida, carta);
 
-            int filaElegida = eleccionFila();
-            switch (filaElegida)
+            if (todosTomaronFila())
             {
-            case 1:
-                if (filas.fila1.size() < 3)
+                for (Jugador &jugador : jugadores)
                 {
-                    filas.agregarCartaAFila(filaElegida, carta);
+                    jugador.colocarComodines();
+                }
+
+                if (baraja.getSize() < 60)
+                {
+                    cout << "Fin del juego." << endl;
                     break;
                 }
-                else
-                {
-                    cout << "Error no se puede agregar más cartas, elija otra fila.";
-                    filaElegida = eleccionFila();
-                }
-                break;
-            case 2:
-                if (filas.fila2.size() < 3)
-                {
-                    filas.agregarCartaAFila(filaElegida, carta);
-                    break;
-                }
-                else
-                {
-                    cout << "Error no se puede agregar más cartas, elija otra fila.";
-                    filaElegida = eleccionFila();
-                }
-                break;
-            case 3:
-                if (filas.fila3.size() < 3)
-                {
-                    filas.agregarCartaAFila(filaElegida, carta);
-                    break;
-                }
-                else
-                {
-                    cout << "Error no se puede agregar más cartas, elija otra fila.";
-                    filaElegida = eleccionFila();
-                }
-                break;
-            default:
-                cout << "Fila inválida." << endl;
-                break;
+                resetearRonda();
+                cout << "Todos los jugadores tomaron una fila." << endl;
             }
             turno++;
-            filas.mostrarFilas();
+            filas->mostrarFilas();
         }
-        cout << "El juego ha terminado. Quedan 15 cartas en la baraja." << endl;
+        cout << "El juego ha terminado. Quedan pocas cartas en la baraja." << endl;
+
+        mostrarPuntajes();
     }
 
-    int eleccionFila()
+    bool todosTomaronFila()
+    {
+        for (bool tomado : jugadoresTomaronFila)
+        {
+            if (!tomado) return false;
+        }
+        return true;
+    }
+
+    void resetearRonda()
+    {
+        fill(jugadoresTomaronFila.begin(), jugadoresTomaronFila.end(), false);
+    }
+
+    void mostrarPuntajes()
+    {
+        cout << "\nPuntajes finales:\n";
+        for (Jugador &jugador : jugadores)
+        {
+            jugador.mostrarCartas();
+            cout << jugador.nombre << " tiene " << jugador.calcularPuntaje() << " puntos." << endl;
+        }
+    }
+
+    int eleccionFila(Filas &filas)
     {
         int filaElegida;
-        cout << "Elige una fila para colocar la carta (1, 2 o 3): ";
-        cin >> filaElegida;
+        do
+        {
+            cout << "Seleccione una fila (1-" << filas.filas.size() << "): ";
+            cin >> filaElegida;
+        } while (filaElegida < 1 || filaElegida > filas.filas.size() || filas.filaTomada[filaElegida - 1]);
+
         return filaElegida;
     }
 };
